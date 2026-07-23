@@ -51,7 +51,6 @@ ROLL_DIVISIONS = [
 ]
 
 PATTERN_SPACINGS = [
-    'Auto Mix',
     'Steady',
     'Spaced Pairs',
 ]
@@ -95,10 +94,10 @@ _pattern_rng = random.Random()
 def createDialog() -> flp.ScriptDialog:
     form = flp.ScriptDialog(SCRIPT_TITLE, SCRIPT_DESCRIPTION)
     form.addInputCombo('Bars', BAR_OPTIONS, 1)
-    form.addInputCombo('Style', STYLES, 2)
+    form.addInputCombo('Style', STYLES, STYLES.index('Dark Atlanta'))
     form.addInputCombo('Base Spacing', BASE_SPACINGS, 7)
     form.addInputCombo('Rolls', ROLL_DIVISIONS, 3)
-    form.addInputCombo('Pattern Spacing', PATTERN_SPACINGS, 1)
+    form.addInputCombo('Pattern Spacing', PATTERN_SPACINGS, 0)
     form.addInputCombo('Pitch Variation', PITCH_MODES, 2)
     form.addInputCheckbox('Clear Piano Roll', True)
     return form
@@ -200,9 +199,9 @@ def get_pattern_shape(rng, selection, style):
 def choose_group_pitch(rng, pitch_mode, style):
     if pitch_mode == 1:
         return clamp(
-            60 + rng.choice([-12, -7, -5, 0, 0, 0, 5, 7, 12]),
-            48,
-            72,
+            60 + rng.choice([-11, -7, -5, 0, 0, 0, 5, 7, 11]),
+            49,
+            71,
         )
 
     if style == 3:
@@ -240,7 +239,7 @@ def pitch_for_hit(
     if pitch_mode == 1:
         if chance < 0.82:
             return 60
-        return clamp(60 + rng.randint(-12, 12), 48, 72)
+        return clamp(60 + rng.randint(-11, 11), 49, 71)
 
     if chance < 0.76:
         return 60
@@ -484,8 +483,8 @@ def apply(form: flp.ScriptDialog) -> None:
     preset = STYLE_PRESETS[style]
     base_selection = preset['base']
     roll_selection = preset['rolls']
-    shape_selection = preset['spacing']
-    pitch_mode = preset['pitch']
+    shape_selection = form.getInputValue('Pattern Spacing') + 1
+    pitch_mode = form.getInputValue('Pitch Variation')
 
     if form.getInputValue('Clear Piano Roll'):
         flp.score.clearNotes(True)
