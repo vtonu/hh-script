@@ -5,7 +5,7 @@ import flpianoroll as flp
 
 SCRIPT_TITLE = 'Hi Hat Midi Generator'
 SCRIPT_DESCRIPTION = (
-    'Hi Hat Midi Generator v1.5 by @prodqualitymusic\n\n'
+    'Hi Hat Midi Generator v1.5.1 by @prodqualitymusic\n\n'
     'Step 1: Choose a style.\n'
     'Step 2: Click Regenerate for endless combinations.'
 )
@@ -51,7 +51,7 @@ ROLL_DIVISIONS = [
 ]
 
 PATTERN_SPACINGS = [
-    'Auto',
+    'Auto Mix',
     'Steady',
     'Spaced Pairs',
 ]
@@ -60,7 +60,6 @@ PITCH_MODES = [
     'Off',
     'Tight',
     'Full',
-    'Sauce',
 ]
 
 BAR_OPTIONS = [
@@ -68,10 +67,6 @@ BAR_OPTIONS = [
     '2 Bars',
     '3 Bars',
     '4 Bars',
-    '5 Bars',
-    '6 Bars',
-    '7 Bars',
-    '8 Bars',
 ]
 
 STYLE_PROFILES = [
@@ -87,15 +82,14 @@ STYLE_PROFILES = [
 STYLE_PRESETS = [
     {'base': 7, 'rolls': 2, 'spacing': 0, 'pitch': 1},
     {'base': 7, 'rolls': 7, 'spacing': 1, 'pitch': 0},
-    {'base': 7, 'rolls': 3, 'spacing': 2, 'pitch': 2},
-    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 3},
+    {'base': 7, 'rolls': 3, 'spacing': 1, 'pitch': 2},
+    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
     {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
     {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
     {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
 ]
 
 _pattern_rng = random.Random()
-_active_seed = None
 
 
 def createDialog() -> flp.ScriptDialog:
@@ -104,10 +98,9 @@ def createDialog() -> flp.ScriptDialog:
     form.addInputCombo('Style', STYLES, 2)
     form.addInputCombo('Base Spacing', BASE_SPACINGS, 7)
     form.addInputCombo('Rolls', ROLL_DIVISIONS, 3)
-    form.addInputCombo('Pattern Spacing', PATTERN_SPACINGS, 2)
+    form.addInputCombo('Pattern Spacing', PATTERN_SPACINGS, 1)
     form.addInputCombo('Pitch Variation', PITCH_MODES, 2)
-    form.addInputKnobInt('Pattern', 1, 1, 9999)
-    form.addInputCheckbox('Clear Notes First', True)
+    form.addInputCheckbox('Clear Piano Roll', True)
     return form
 
 
@@ -115,13 +108,14 @@ def clamp(value, low, high):
     return max(low, min(high, value))
 
 
-def add_hit(events, time, velocity, kind='main'):
+def add_hit(events, time, velocity, kind='main', group=None):
     if time < 0:
         return
 
     hit = {
         'velocity': clamp(velocity, 0.0, 1.0),
         'kind': kind,
+        'group': group,
     }
     current = events.get(time)
 
@@ -203,46 +197,60 @@ def get_pattern_shape(rng, selection, style):
     return rng.choice([1, 2, 3, 4, 5])
 
 
-def pitch_for_hit(rng, pitch_mode, kind, style):
-    if kind in ('anchor', 'steady'):
+def choose_group_pitch(rng, pitch_mode, style):
+    if pitch_mode == 1:
+        return clamp(
+            60 + rng.choice([-12, -7, -5, 0, 0, 0, 5, 7, 12]),
+            48,
+            72,
+        )
+
+    if style == 3:
+        if rng.random() < 0.44:
+            return rng.choice([24, 36, 48, 60, 72, 84, 96])
+        return rng.randint(0, 131)
+
+    if rng.random() < 0.68:
+        return rng.choice([36, 48, 60, 60, 60, 72, 84])
+    return rng.randint(0, 131)
+
+
+def pitch_for_hit(
+    rng,
+    pitch_mode,
+    kind,
+    style,
+    group,
+    pitch_groups,
+):
+    if kind in ('anchor', 'steady_fixed') or pitch_mode == 0:
         return 60
 
-    if pitch_mode == 0:
-        return 60
+    if group is not None:
+        if group not in pitch_groups:
+            pitch_groups[group] = choose_group_pitch(
+                rng,
+                pitch_mode,
+                style,
+            )
+        return pitch_groups[group]
 
     chance = rng.random()
 
     if pitch_mode == 1:
-        if chance < 0.92:
+        if chance < 0.82:
             return 60
-        return 60 + rng.choice([-1, 1])
+        return clamp(60 + rng.randint(-12, 12), 48, 72)
 
-    if pitch_mode == 3:
-        if chance < 0.48:
-            return 60
-        if chance < 0.64:
-            return 60 + rng.choice([-2, -1, 1, 2])
-        if chance < 0.78:
-            return 60 + rng.choice([-5, -4, -3, 3, 4, 5])
-        return 60 + rng.choice(
-            [-12, -11, -10, -8, -7, 7, 8, 10, 11, 12]
-        )
-
-    if chance < 0.80:
+    if chance < 0.76:
         return 60
-    if chance < 0.92:
-        return 60 + rng.choice([-1, 1])
-    if chance < 0.97:
-        return 60 + rng.choice([-4, -3, -2, 2, 3, 4])
-
-    shift = rng.choice([-12, -10, -8, -7, 7, 8, 10, 12])
-    if kind == 'roll' and rng.random() < 0.55:
-        shift = rng.choice([-3, -2, -1, 1, 2, 3])
-    return 60 + shift
+    if chance < 0.90:
+        return clamp(60 + rng.randint(-12, 12), 0, 131)
+    return rng.randint(0, 131)
 
 
 def velocity_for_hit(rng, time, beat_ticks, kind, style):
-    if kind == 'steady':
+    if kind == 'steady_fixed':
         return 0.80
 
     if kind == 'anchor':
@@ -274,11 +282,13 @@ def add_steady_pattern(
     bar_ticks,
     spacing,
     profile,
+    fixed=False,
 ):
     time = bar_start
+    kind = 'steady_fixed' if fixed else 'main'
 
     while time < bar_start + bar_ticks:
-        add_hit(events, time, 0.80, 'steady')
+        add_hit(events, time, 0.80, kind)
         time += spacing
 
 
@@ -294,11 +304,12 @@ def add_spaced_pairs(
     time = bar_start
 
     while time < end:
-        add_hit(events, time, 0.86, 'pair')
+        group = ('pair', time)
+        add_hit(events, time, 0.86, 'pair', group)
 
         second_hit = time + spacing
         if second_hit < end and rng.random() > profile['gaps'] * 0.35:
-            add_hit(events, second_hit, 0.76, 'pair')
+            add_hit(events, second_hit, 0.76, 'pair', group)
 
         gap_size = rng.choice([3, 4, 5, 6])
         time += spacing * gap_size
@@ -319,11 +330,21 @@ def add_roll(
     if hit_count is None:
         hit_count = rng.choice([3, 4, 4, 5, 6])
 
+    split_roll = hit_count >= 5 and rng.random() < 0.38
+
     for hit_index in range(hit_count):
         time = start + (hit_index * roll_spacing)
         if time >= end:
             break
-        add_hit(events, time, 0.78 - (hit_index * 0.025), 'roll')
+        segment = 1 if split_roll and hit_index >= hit_count // 2 else 0
+        group = ('roll', start, segment)
+        add_hit(
+            events,
+            time,
+            0.78 - (hit_index * 0.025),
+            'roll',
+            group,
+        )
 
 
 def add_roll_then_space(
@@ -371,6 +392,7 @@ def add_staggered_bursts(
     while time < end:
         burst_size = rng.choice([2, 2, 3, 3, 4])
         burst_spacing = rng.choice([spacing, spacing, roll_spacing])
+        group = ('burst', time)
 
         for hit_index in range(burst_size):
             hit_time = time + (hit_index * burst_spacing)
@@ -381,6 +403,7 @@ def add_staggered_bursts(
                 hit_time,
                 0.84 - (hit_index * 0.035),
                 'pair',
+                group,
             )
 
         gap = rng.choice([3, 4, 5, 6]) * spacing
@@ -456,8 +479,6 @@ def add_style_fill(
 
 
 def apply(form: flp.ScriptDialog) -> None:
-    global _active_seed
-
     bar_count = form.getInputValue('Bars') + 1
     style = form.getInputValue('Style')
     preset = STYLE_PRESETS[style]
@@ -465,14 +486,9 @@ def apply(form: flp.ScriptDialog) -> None:
     roll_selection = preset['rolls']
     shape_selection = preset['spacing']
     pitch_mode = preset['pitch']
-    seed = form.getInputValue('Pattern')
 
-    if form.getInputValue('Clear Notes First'):
+    if form.getInputValue('Clear Piano Roll'):
         flp.score.clearNotes(True)
-
-    if seed != _active_seed:
-        _pattern_rng.seed(seed)
-        _active_seed = seed
 
     rng = _pattern_rng
     profile = STYLE_PROFILES[style]
@@ -480,6 +496,11 @@ def apply(form: flp.ScriptDialog) -> None:
     step_ticks = max(1, beat_ticks // 4)
     bar_ticks = beat_ticks * 4
     events = {}
+    memphis_steady = style == 0 and rng.random() < 0.46
+    southside_full = style == 4 and rng.random() < 0.62
+
+    if memphis_steady:
+        pitch_mode = 0
 
     for bar_index in range(bar_count):
         bar_start = bar_index * bar_ticks
@@ -497,7 +518,33 @@ def apply(form: flp.ScriptDialog) -> None:
         )
         shape = get_pattern_shape(rng, shape_selection, style)
 
-        if shape == 1:
+        if memphis_steady:
+            add_steady_pattern(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                spacing,
+                profile,
+                fixed=True,
+            )
+            triplet_spacing = snap_spacing(3, beat_ticks)
+            triplet_start = (
+                bar_start
+                + bar_ticks
+                - (triplet_spacing * 3)
+            )
+            add_roll(
+                events,
+                rng,
+                triplet_start,
+                bar_start + bar_ticks,
+                triplet_spacing,
+                3,
+            )
+            continue
+
+        if southside_full:
             add_steady_pattern(
                 events,
                 rng,
@@ -506,6 +553,18 @@ def apply(form: flp.ScriptDialog) -> None:
                 spacing,
                 profile,
             )
+
+        if shape == 1:
+            if not southside_full:
+                add_steady_pattern(
+                    events,
+                    rng,
+                    bar_start,
+                    bar_ticks,
+                    spacing,
+                    profile,
+                    fixed=style == 1,
+                )
         elif shape == 2:
             add_spaced_pairs(
                 events,
@@ -543,7 +602,7 @@ def apply(form: flp.ScriptDialog) -> None:
                 roll_spacing,
             )
 
-        if shape != 1:
+        if style != 1:
             add_style_fill(
                 events,
                 rng,
@@ -556,12 +615,13 @@ def apply(form: flp.ScriptDialog) -> None:
             )
 
     # Every pattern starts with a clear C5 hi-hat.
-    if shape_selection == 1:
-        add_hit(events, 0, 0.80, 'steady')
+    if style == 1:
+        add_hit(events, 0, 0.80, 'steady_fixed')
     else:
         add_hit(events, 0, 0.92, 'anchor')
 
     ordered_times = sorted(events.keys())
+    pitch_groups = {}
 
     for index, time in enumerate(ordered_times):
         hit = events[time]
@@ -577,6 +637,8 @@ def apply(form: flp.ScriptDialog) -> None:
             pitch_mode,
             hit['kind'],
             style,
+            hit['group'],
+            pitch_groups,
         )
         note.time = time
         note.length = max(1, min(step_ticks, next_time - time))
