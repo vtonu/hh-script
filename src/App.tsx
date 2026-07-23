@@ -36,12 +36,17 @@ const screenshots = [
   {
     src: "/screenshots/generator.jpg",
     alt: "Hi Hat MIDI Generator inside FL Studio",
-    label: "THE GENERATOR",
+    label: "THE GENERATOR IN ACTION",
   },
   {
-    src: "/screenshots/piano-roll-menu.jpg",
+    src: "/screenshots/app-closeup.jpg",
+    alt: "Hi Hat MIDI Generator app close-up",
+    label: "THE APP",
+  },
+  {
+    src: "/screenshots/piano-roll-tools.jpg",
     alt: "Piano Roll menu with Tools option",
-    label: "OPEN PIANO ROLL MENU",
+    label: "PIANO ROLL TOOLS",
   },
   {
     src: "/screenshots/tools-menu.jpg",

@@ -106,9 +106,13 @@ footer {
 }
 
 .eyebrow span {
-  width: 24px;
-  height: 1px;
-  background: currentColor;
+  width: 30px;
+  height: 8px;
+  background:
+    linear-gradient(currentColor, currentColor) 0 5px / 5px 3px no-repeat,
+    linear-gradient(currentColor, currentColor) 8px 2px / 5px 6px no-repeat,
+    linear-gradient(currentColor, currentColor) 16px 4px / 5px 4px no-repeat,
+    linear-gradient(currentColor, currentColor) 24px 0 / 6px 8px no-repeat;
 }
 
 h1 {
