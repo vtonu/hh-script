@@ -215,6 +215,23 @@ h1 em {
   line-height: 1.5;
 }
 
+.path-trigger {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.path-trigger:hover,
+.path-trigger:focus-visible {
+  color: hsl(var(--primary));
+}
+
 .path-box {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 40px;
@@ -224,6 +241,16 @@ h1 em {
   border: 1px solid #303330;
   border-radius: 7px;
   background: #111311;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.path-box.highlighted {
+  border-color: hsl(var(--primary));
+  background: rgba(193, 255, 8, 0.07);
+  box-shadow: 0 0 0 3px rgba(193, 255, 8, 0.12);
 }
 
 .path-box div {
@@ -350,13 +377,19 @@ footer a:hover {
   color: hsl(var(--primary));
 }
 
-footer svg {
-  width: 14px;
+.credit {
+  display: flex;
+  align-items: center;
 }
 
-footer small {
-  color: #5e625e;
-  font-size: 7px;
+.credit a {
+  display: inline;
+  margin-left: 0.4em;
+  color: #aeb2ae;
+}
+
+footer svg {
+  width: 14px;
 }
 
 @media (max-width: 960px) {
@@ -396,8 +429,7 @@ footer small {
     padding: 0 16px;
   }
 
-  .version,
-  footer > span {
+  .version {
     display: none;
   }
 
@@ -479,7 +511,13 @@ footer small {
   }
 
   footer {
-    justify-content: flex-end;
+    gap: 12px;
+    font-size: 7px;
+    letter-spacing: 0.06em;
+  }
+
+  footer > a {
+    gap: 4px;
   }
 }
 

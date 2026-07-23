@@ -16,19 +16,19 @@ const installPath =
 const steps = [
   {
     title: "Download",
-    text: "Close FL Studio, then download the script.",
+    text: "Download the script, then close FL Studio.",
   },
   {
-    title: "Move the file",
-    text: "Place the .pyscript file in the folder shown below.",
+    title: "Install",
+    text: "Place the .pyscript file in the install folder below.",
   },
   {
-    title: "Restart",
-    text: "Restart your PC, then open a fresh FL Studio session.",
+    title: "Restart FL",
+    text: "Open a fresh FL Studio session after the file is installed.",
   },
   {
     title: "Open the tool",
-    text: "Add a hi-hat, open Piano Roll, then go to Tools → Hi Hat MIDI Generator.",
+    text: "Add a hi-hat, open Piano Roll, then go to Tools > Scripts > Hi Hat MIDI Generator.",
   },
 ];
 
@@ -46,13 +46,14 @@ const screenshots = [
   {
     src: "/screenshots/tools-menu.jpg",
     alt: "Tools menu with Hi Hat MIDI Generator",
-    label: "TOOLS → HI HAT MIDI GENERATOR",
+    label: "TOOLS > SCRIPTS > HI HAT MIDI GENERATOR",
   },
 ];
 
 function App() {
   const [activeShot, setActiveShot] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [pathHighlighted, setPathHighlighted] = useState(false);
 
   const changeShot = (direction: number) => {
     setActiveShot(
@@ -64,6 +65,12 @@ function App() {
     await navigator.clipboard.writeText(installPath);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
+  };
+
+  const highlightPath = () => {
+    setPathHighlighted(false);
+    window.requestAnimationFrame(() => setPathHighlighted(true));
+    window.setTimeout(() => setPathHighlighted(false), 1600);
   };
 
   return (
@@ -79,7 +86,7 @@ function App() {
         <section className="intro" aria-labelledby="page-title">
           <p className="eyebrow">
             <span />
-            WORK FASTER
+            WORK SMARTER
           </p>
           <h1 id="page-title">
             HI HAT
@@ -87,8 +94,8 @@ function App() {
             MIDI <em>GENERATOR.</em>
           </h1>
           <p className="lede">
-            Build quick hi-hat patterns inside FL Studio. Download the script,
-            install it once, and open it from your Piano Roll tools.
+            Create quick hi-hat midis inside FL Studio. Download the script,
+            install it once, and open it directly from your piano roll tools.
           </p>
           <Button asChild size="lg" className="download-button">
             <a href="/Hi Hat Midi Generator.pyscript" download>
@@ -96,7 +103,7 @@ function App() {
               DOWNLOAD SCRIPT
             </a>
           </Button>
-          <p className="file-note">.PYSCRIPT · FL STUDIO 2026</p>
+          <p className="file-note">.PYSCRIPT FILE</p>
         </section>
 
         <section className="steps-panel" aria-labelledby="steps-title">
@@ -111,13 +118,23 @@ function App() {
                 <span className="step-number">0{index + 1}</span>
                 <div>
                   <h3>{step.title}</h3>
-                  <p>{step.text}</p>
+                  {index === 1 ? (
+                    <p>
+                      Place the .pyscript file in the{" "}
+                      <button className="path-trigger" onClick={highlightPath}>
+                        install folder below
+                      </button>
+                      .
+                    </p>
+                  ) : (
+                    <p>{step.text}</p>
+                  )}
                 </div>
               </li>
             ))}
           </ol>
 
-          <div className="path-box">
+          <div className={`path-box ${pathHighlighted ? "highlighted" : ""}`}>
             <div>
               <span>INSTALL FOLDER</span>
               <code>{installPath}</code>
@@ -178,11 +195,23 @@ function App() {
       </div>
 
       <footer>
-        <span>MADE FOR PRODUCERS</span>
-        <a href="#" onClick={(event) => event.preventDefault()}>
+        <span className="credit">
+          MADE FOR PRODUCERS BY{" "}
+          <a
+            href="https://www.instagram.com/prodqualitymusic"
+            target="_blank"
+            rel="noreferrer"
+          >
+            QUALITY
+          </a>
+        </span>
+        <a
+          href="https://buymeacoffee.com/prodbyquality"
+          target="_blank"
+          rel="noreferrer"
+        >
           <Coffee aria-hidden="true" />
           BUY ME A COFFEE
-          <small>LINK COMING SOON</small>
         </a>
       </footer>
     </main>
