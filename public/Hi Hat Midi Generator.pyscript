@@ -1,0 +1,688 @@
+import random
+
+import flpianoroll as flp
+
+
+SCRIPT_TITLE = 'Hi Hat Midi Generator'
+SCRIPT_DESCRIPTION = (
+    'v1.5.2 by @prodqualitymusic\n\n'
+    'Step 1: Choose a style.\n'
+    'Step 2: Click Regenerate for endless combinations.'
+)
+
+STYLES = [
+    'Memphis',
+    'Walkdown',
+    'Dark Atlanta',
+    'Trap Hybrid',
+    'Southside',
+    'Wheezy',
+    'TM88',
+]
+
+BASE_SPACINGS = [
+    'Auto Mix',
+    '1/6 Step',
+    '1/4 Step',
+    '1/3 Step',
+    '1/2 Step',
+    'Step',
+    '1/6 Beat',
+    '1/4 Beat',
+    '1/3 Beat',
+    '1/2 Beat',
+    'Beat',
+    'Bar',
+]
+
+ROLL_DIVISIONS = [
+    'Auto Mix',
+    '1/6 Step',
+    '1/4 Step',
+    '1/3 Step',
+    '1/2 Step',
+    'Step',
+    '1/6 Beat',
+    '1/4 Beat',
+    '1/3 Beat',
+    '1/2 Beat',
+    'Beat',
+    'Bar',
+]
+
+PATTERN_SPACINGS = [
+    'Steady',
+    'Spaced Pairs',
+    'Triplet Pairs',
+]
+
+PITCH_MODES = [
+    'Off',
+    'Tight',
+    'Full',
+]
+
+BAR_OPTIONS = [
+    '1 Bar',
+    '2 Bars',
+    '3 Bars',
+    '4 Bars',
+]
+
+STYLE_PROFILES = [
+    {'density': 0.70, 'rolls': 0.52, 'triplets': 0.62, 'gaps': 0.20, 'velocity': 0.10},
+    {'density': 0.98, 'rolls': 0.08, 'triplets': 0.08, 'gaps': 0.00, 'velocity': 0.04},
+    {'density': 0.68, 'rolls': 0.58, 'triplets': 0.44, 'gaps': 0.20, 'velocity': 0.12},
+    {'density': 0.64, 'rolls': 0.72, 'triplets': 0.56, 'gaps': 0.24, 'velocity': 0.18},
+    {'density': 0.66, 'rolls': 0.62, 'triplets': 0.52, 'gaps': 0.24, 'velocity': 0.14},
+    {'density': 0.72, 'rolls': 0.86, 'triplets': 0.70, 'gaps': 0.24, 'velocity': 0.26},
+    {'density': 0.70, 'rolls': 0.78, 'triplets': 0.58, 'gaps': 0.22, 'velocity': 0.22},
+]
+
+STYLE_PRESETS = [
+    {'base': 7, 'rolls': 2, 'spacing': 0, 'pitch': 1},
+    {'base': 7, 'rolls': 7, 'spacing': 1, 'pitch': 0},
+    {'base': 7, 'rolls': 3, 'spacing': 1, 'pitch': 2},
+    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
+    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
+    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
+    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
+]
+
+_pattern_rng = random.Random()
+
+
+def createDialog() -> flp.ScriptDialog:
+    form = flp.ScriptDialog(SCRIPT_TITLE, SCRIPT_DESCRIPTION)
+    form.addInputCombo('Bars', BAR_OPTIONS, 1)
+    form.addInputCombo('Style', STYLES, STYLES.index('Dark Atlanta'))
+    form.addInputCombo('Base Spacing', BASE_SPACINGS, 7)
+    form.addInputCombo('Rolls', ROLL_DIVISIONS, 3)
+    form.addInputCombo('Pattern Spacing', PATTERN_SPACINGS, 0)
+    form.addInputCombo('Pitch Variation', PITCH_MODES, 2)
+    form.addInputCheckbox('Clear Piano Roll', True)
+    return form
+
+
+def clamp(value, low, high):
+    return max(low, min(high, value))
+
+
+def add_hit(events, time, velocity, kind='main', group=None):
+    if time < 0:
+        return
+
+    hit = {
+        'velocity': clamp(velocity, 0.0, 1.0),
+        'kind': kind,
+        'group': group,
+    }
+    current = events.get(time)
+
+    if current is None or hit['velocity'] > current['velocity']:
+        events[time] = hit
+
+
+def snap_spacing(selection, beat_ticks):
+    spacings = [
+        None,
+        beat_ticks // 24,
+        beat_ticks // 16,
+        beat_ticks // 12,
+        beat_ticks // 8,
+        beat_ticks // 4,
+        beat_ticks // 6,
+        beat_ticks // 4,
+        beat_ticks // 3,
+        beat_ticks // 2,
+        beat_ticks,
+        beat_ticks * 4,
+    ]
+    return max(1, spacings[selection])
+
+
+def get_base_spacing(rng, selection, style, beat_ticks):
+    if selection > 0:
+        return snap_spacing(selection, beat_ticks)
+
+    if style == 0:
+        choices = [7, 7, 7, 2, 3]
+    elif style == 1:
+        choices = [7]
+    elif style == 5:
+        choices = [8, 8, 8, 6, 3]
+    elif style in (6, 7, 8):
+        choices = [5, 7, 7, 8, 9]
+    elif style in (9, 10):
+        choices = [7, 7, 9, 10]
+    elif style in (11, 12, 13):
+        choices = [5, 7, 8, 8, 9]
+    else:
+        choices = [5, 7, 8, 9]
+
+    return snap_spacing(rng.choice(choices), beat_ticks)
+
+
+def get_roll_spacing(rng, selection, style, beat_ticks):
+    if selection > 0:
+        return snap_spacing(selection, beat_ticks)
+
+    profile = STYLE_PROFILES[style]
+    if rng.random() < profile['triplets']:
+        choices = [3, 6, 8]
+    else:
+        choices = [1, 2, 4, 4]
+
+    return snap_spacing(rng.choice(choices), beat_ticks)
+
+
+def get_pattern_shape(rng, selection, style):
+    if selection > 0:
+        return selection
+
+    if style == 0:
+        return rng.choice([1, 2, 2, 4])
+    if style == 1:
+        return 1
+    if style == 2:
+        return 2
+    if style == 3:
+        return rng.choice([2, 3, 4, 4, 5])
+    if style == 4:
+        return rng.choice([1, 2, 3, 5])
+    if style == 5:
+        return rng.choice([2, 3, 4, 4, 5])
+    if style == 6:
+        return rng.choice([2, 3, 4, 5])
+    return rng.choice([1, 2, 3, 4, 5])
+
+
+def choose_group_pitch(rng, pitch_mode, style):
+    if pitch_mode == 1:
+        return clamp(
+            60 + rng.choice([-11, -7, -5, 0, 0, 0, 5, 7, 11]),
+            49,
+            71,
+        )
+
+    if style == 3:
+        if rng.random() < 0.44:
+            return rng.choice([24, 36, 48, 60, 72, 84, 96])
+        return rng.randint(0, 131)
+
+    if rng.random() < 0.68:
+        return rng.choice([36, 48, 60, 60, 60, 72, 84])
+    return rng.randint(0, 131)
+
+
+def pitch_for_hit(
+    rng,
+    pitch_mode,
+    kind,
+    style,
+    group,
+    pitch_groups,
+):
+    if kind in ('anchor', 'steady_fixed') or pitch_mode == 0:
+        return 60
+
+    if group is not None:
+        if group not in pitch_groups:
+            pitch_groups[group] = choose_group_pitch(
+                rng,
+                pitch_mode,
+                style,
+            )
+        return pitch_groups[group]
+
+    chance = rng.random()
+
+    if pitch_mode == 1:
+        if chance < 0.82:
+            return 60
+        return clamp(60 + rng.randint(-11, 11), 49, 71)
+
+    if chance < 0.76:
+        return 60
+    if chance < 0.90:
+        return clamp(60 + rng.randint(-12, 12), 0, 131)
+    return rng.randint(0, 131)
+
+
+def velocity_for_hit(rng, time, beat_ticks, kind, style):
+    if kind == 'steady_fixed':
+        return 0.80
+
+    if kind == 'anchor':
+        return 0.92
+
+    beat_position = time % beat_ticks
+    velocity = 0.78
+
+    if beat_position == 0:
+        velocity += 0.10
+    elif beat_position >= beat_ticks // 2:
+        velocity -= 0.08
+
+    velocity_spread = STYLE_PROFILES[style]['velocity']
+    velocity += rng.uniform(-velocity_spread, velocity_spread)
+
+    if kind == 'roll':
+        velocity -= rng.uniform(0.04, 0.13)
+    elif kind == 'pair':
+        velocity -= rng.uniform(0.00, 0.06)
+
+    return clamp(velocity, 0.46, 0.98)
+
+
+def add_steady_pattern(
+    events,
+    rng,
+    bar_start,
+    bar_ticks,
+    spacing,
+    profile,
+    fixed=False,
+):
+    time = bar_start
+    kind = 'steady_fixed' if fixed else 'main'
+
+    while time < bar_start + bar_ticks:
+        add_hit(events, time, 0.80, kind)
+        time += spacing
+
+
+def add_spaced_pairs(
+    events,
+    rng,
+    bar_start,
+    bar_ticks,
+    spacing,
+    profile,
+):
+    end = bar_start + bar_ticks
+    time = bar_start
+
+    while time < end:
+        group = ('pair', time)
+        add_hit(events, time, 0.86, 'pair', group)
+
+        second_hit = time + spacing
+        if second_hit < end and rng.random() > profile['gaps'] * 0.35:
+            add_hit(events, second_hit, 0.76, 'pair', group)
+
+        gap_size = rng.choice([3, 4, 5, 6])
+        time += spacing * gap_size
+
+    if rng.random() < 0.40:
+        pickup = end - spacing
+        add_hit(events, pickup, 0.72, 'pair')
+
+
+def add_triplet_pairs(
+    events,
+    rng,
+    bar_start,
+    bar_ticks,
+    spacing,
+    roll_spacing,
+    profile,
+):
+    end = bar_start + bar_ticks
+    time = bar_start
+
+    while time < end:
+        group = ('triplet_pair', time)
+
+        for hit_index in range(3):
+            hit_time = time + (hit_index * roll_spacing)
+            if hit_time >= end:
+                break
+            add_hit(
+                events,
+                hit_time,
+                0.86 - (hit_index * 0.05),
+                'roll',
+                group,
+            )
+
+        gap_size = rng.choice([4, 5, 6, 7])
+        time += max(spacing * gap_size, roll_spacing * 5)
+
+    if rng.random() > profile['gaps']:
+        pickup = end - (roll_spacing * 3)
+        add_roll(events, rng, pickup, end, roll_spacing, 3)
+
+
+def add_roll(
+    events,
+    rng,
+    start,
+    end,
+    roll_spacing,
+    hit_count=None,
+):
+    if hit_count is None:
+        hit_count = rng.choice([3, 4, 4, 5, 6])
+
+    split_roll = hit_count >= 5 and rng.random() < 0.38
+
+    for hit_index in range(hit_count):
+        time = start + (hit_index * roll_spacing)
+        if time >= end:
+            break
+        segment = 1 if split_roll and hit_index >= hit_count // 2 else 0
+        group = ('roll', start, segment)
+        add_hit(
+            events,
+            time,
+            0.78 - (hit_index * 0.025),
+            'roll',
+            group,
+        )
+
+
+def add_roll_then_space(
+    events,
+    rng,
+    bar_start,
+    bar_ticks,
+    spacing,
+    roll_spacing,
+):
+    end = bar_start + bar_ticks
+    section_ticks = bar_ticks // 2
+
+    for section in range(2):
+        section_start = bar_start + (section * section_ticks)
+        section_end = min(end, section_start + section_ticks)
+
+        add_roll(
+            events,
+            rng,
+            section_start,
+            section_end,
+            roll_spacing,
+            rng.choice([3, 4, 5]),
+        )
+
+        pair_start = section_start + max(spacing * 3, bar_ticks // 4)
+        if pair_start < section_end:
+            add_hit(events, pair_start, 0.86, 'pair')
+        if pair_start + spacing < section_end:
+            add_hit(events, pair_start + spacing, 0.76, 'pair')
+
+
+def add_staggered_bursts(
+    events,
+    rng,
+    bar_start,
+    bar_ticks,
+    spacing,
+    roll_spacing,
+):
+    end = bar_start + bar_ticks
+    time = bar_start
+
+    while time < end:
+        burst_size = rng.choice([2, 2, 3, 3, 4])
+        burst_spacing = rng.choice([spacing, spacing, roll_spacing])
+        group = ('burst', time)
+
+        for hit_index in range(burst_size):
+            hit_time = time + (hit_index * burst_spacing)
+            if hit_time >= end:
+                break
+            add_hit(
+                events,
+                hit_time,
+                0.84 - (hit_index * 0.035),
+                'pair',
+                group,
+            )
+
+        gap = rng.choice([3, 4, 5, 6]) * spacing
+        time += max(gap, burst_size * burst_spacing)
+
+
+def add_long_gap_drops(
+    events,
+    rng,
+    bar_start,
+    bar_ticks,
+    spacing,
+    roll_spacing,
+):
+    end = bar_start + bar_ticks
+    add_hit(events, bar_start, 0.90, 'main')
+
+    first_pair = bar_start + spacing
+    if first_pair < end:
+        add_hit(events, first_pair, 0.78, 'pair')
+
+    late_start = bar_start + rng.choice(
+        [
+            bar_ticks // 2,
+            (bar_ticks * 5) // 8,
+            (bar_ticks * 3) // 4,
+        ]
+    )
+
+    if rng.random() < 0.58:
+        add_roll(
+            events,
+            rng,
+            late_start,
+            end,
+            roll_spacing,
+            rng.choice([4, 5, 6, 8]),
+        )
+    else:
+        add_hit(events, late_start, 0.86, 'pair')
+        if late_start + spacing < end:
+            add_hit(events, late_start + spacing, 0.76, 'pair')
+
+
+def add_style_fill(
+    events,
+    rng,
+    bar_start,
+    bar_ticks,
+    step_ticks,
+    roll_spacing,
+    profile,
+    is_last_bar,
+):
+    chance = profile['rolls']
+    if is_last_bar:
+        chance += 0.18
+
+    if rng.random() >= clamp(chance, 0.0, 0.94):
+        return
+
+    end = bar_start + bar_ticks
+    late_fill = is_last_bar or rng.random() < 0.58
+
+    if late_fill:
+        hit_count = rng.choice([3, 4, 5, 6])
+        start = end - (roll_spacing * hit_count)
+    else:
+        hit_count = rng.choice([3, 4, 4, 5])
+        start = bar_start + rng.choice([6, 9, 11, 13]) * step_ticks
+
+    add_roll(events, rng, start, end, roll_spacing, hit_count)
+
+
+def apply(form: flp.ScriptDialog) -> None:
+    bar_count = form.getInputValue('Bars') + 1
+    style = form.getInputValue('Style')
+    preset = STYLE_PRESETS[style]
+    base_selection = preset['base']
+    roll_selection = preset['rolls']
+    shape_selection = form.getInputValue('Pattern Spacing') + 1
+    pitch_mode = form.getInputValue('Pitch Variation')
+
+    if form.getInputValue('Clear Piano Roll'):
+        flp.score.clearNotes(True)
+
+    rng = _pattern_rng
+    profile = STYLE_PROFILES[style]
+    beat_ticks = flp.score.PPQ
+    step_ticks = max(1, beat_ticks // 4)
+    bar_ticks = beat_ticks * 4
+    events = {}
+    memphis_steady = style == 0 and rng.random() < 0.46
+    southside_full = style == 4 and rng.random() < 0.62
+
+    if memphis_steady:
+        pitch_mode = 0
+
+    for bar_index in range(bar_count):
+        bar_start = bar_index * bar_ticks
+        spacing = get_base_spacing(
+            rng,
+            base_selection,
+            style,
+            beat_ticks,
+        )
+        roll_spacing = get_roll_spacing(
+            rng,
+            roll_selection,
+            style,
+            beat_ticks,
+        )
+        shape = get_pattern_shape(rng, shape_selection, style)
+
+        if memphis_steady:
+            add_steady_pattern(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                spacing,
+                profile,
+                fixed=True,
+            )
+            triplet_spacing = snap_spacing(3, beat_ticks)
+            triplet_start = (
+                bar_start
+                + bar_ticks
+                - (triplet_spacing * 3)
+            )
+            add_roll(
+                events,
+                rng,
+                triplet_start,
+                bar_start + bar_ticks,
+                triplet_spacing,
+                3,
+            )
+            continue
+
+        if southside_full:
+            add_steady_pattern(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                spacing,
+                profile,
+            )
+
+        if shape == 1:
+            if not southside_full:
+                add_steady_pattern(
+                    events,
+                    rng,
+                    bar_start,
+                    bar_ticks,
+                    spacing,
+                    profile,
+                    fixed=style == 1,
+                )
+        elif shape == 2:
+            add_spaced_pairs(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                spacing,
+                profile,
+            )
+        elif shape == 3:
+            add_triplet_pairs(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                spacing,
+                roll_spacing,
+                profile,
+            )
+        elif shape == 4:
+            add_staggered_bursts(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                spacing,
+                roll_spacing,
+            )
+        else:
+            add_long_gap_drops(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                spacing,
+                roll_spacing,
+            )
+
+        if style != 1:
+            add_style_fill(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                step_ticks,
+                roll_spacing,
+                profile,
+                bar_index == bar_count - 1,
+            )
+
+    # Every pattern starts with a clear C5 hi-hat.
+    if style == 1:
+        add_hit(events, 0, 0.80, 'steady_fixed')
+    else:
+        add_hit(events, 0, 0.92, 'anchor')
+
+    ordered_times = sorted(events.keys())
+    pitch_groups = {}
+
+    for index, time in enumerate(ordered_times):
+        hit = events[time]
+        next_time = (
+            ordered_times[index + 1]
+            if index + 1 < len(ordered_times)
+            else bar_count * bar_ticks
+        )
+
+        note = flp.Note()
+        note.number = pitch_for_hit(
+            rng,
+            pitch_mode,
+            hit['kind'],
+            style,
+            hit['group'],
+            pitch_groups,
+        )
+        note.time = time
+        note.length = max(1, min(step_ticks, next_time - time))
+        note.velocity = velocity_for_hit(
+            rng,
+            time,
+            beat_ticks,
+            hit['kind'],
+            style,
+        )
+        flp.score.addNote(note)
