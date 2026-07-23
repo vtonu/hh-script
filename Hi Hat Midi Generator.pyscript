@@ -4,23 +4,20 @@ import flpianoroll as flp
 
 
 SCRIPT_TITLE = 'Hi Hat Midi Generator'
-SCRIPT_DESCRIPTION = 'hi hat midi generator v1.3 by @prodqualitymusic'
+SCRIPT_DESCRIPTION = (
+    'Hi Hat Midi Generator v1.5 by @prodqualitymusic\n\n'
+    'Step 1: Choose a style.\n'
+    'Step 2: Click Regenerate for endless combinations.'
+)
 
 STYLES = [
-    'Memphis Drill',
+    'Memphis',
     'Walkdown',
     'Dark Atlanta',
-    'Trap Modern',
     'Trap Hybrid',
-    'Triplet Bounce',
     'Southside',
-    'TM88',
     'Wheezy',
-    'Chicago GLO',
-    'Southern OG',
-    'Chicago Drill',
-    'UK Drill',
-    'NYC Drill',
+    'TM88',
 ]
 
 BASE_SPACINGS = [
@@ -57,15 +54,13 @@ PATTERN_SPACINGS = [
     'Auto',
     'Steady',
     'Spaced Pairs',
-    'Roll Then Space',
-    'Staggered Bursts',
-    'Long Gap Drops',
 ]
 
 PITCH_MODES = [
     'Off',
     'Tight',
     'Full',
+    'Sauce',
 ]
 
 BAR_OPTIONS = [
@@ -83,17 +78,20 @@ STYLE_PROFILES = [
     {'density': 0.70, 'rolls': 0.52, 'triplets': 0.62, 'gaps': 0.20, 'velocity': 0.10},
     {'density': 0.98, 'rolls': 0.08, 'triplets': 0.08, 'gaps': 0.00, 'velocity': 0.04},
     {'density': 0.68, 'rolls': 0.58, 'triplets': 0.44, 'gaps': 0.20, 'velocity': 0.12},
-    {'density': 0.76, 'rolls': 0.52, 'triplets': 0.40, 'gaps': 0.14, 'velocity': 0.10},
     {'density': 0.64, 'rolls': 0.72, 'triplets': 0.56, 'gaps': 0.24, 'velocity': 0.18},
-    {'density': 0.74, 'rolls': 0.68, 'triplets': 0.96, 'gaps': 0.16, 'velocity': 0.12},
     {'density': 0.66, 'rolls': 0.62, 'triplets': 0.52, 'gaps': 0.24, 'velocity': 0.14},
-    {'density': 0.70, 'rolls': 0.78, 'triplets': 0.58, 'gaps': 0.22, 'velocity': 0.22},
     {'density': 0.72, 'rolls': 0.86, 'triplets': 0.70, 'gaps': 0.24, 'velocity': 0.26},
-    {'density': 0.72, 'rolls': 0.42, 'triplets': 0.34, 'gaps': 0.16, 'velocity': 0.08},
-    {'density': 0.62, 'rolls': 0.34, 'triplets': 0.28, 'gaps': 0.26, 'velocity': 0.08},
-    {'density': 0.68, 'rolls': 0.60, 'triplets': 0.50, 'gaps': 0.20, 'velocity': 0.12},
-    {'density': 0.68, 'rolls': 0.72, 'triplets': 0.70, 'gaps': 0.24, 'velocity': 0.18},
-    {'density': 0.74, 'rolls': 0.78, 'triplets': 0.54, 'gaps': 0.22, 'velocity': 0.20},
+    {'density': 0.70, 'rolls': 0.78, 'triplets': 0.58, 'gaps': 0.22, 'velocity': 0.22},
+]
+
+STYLE_PRESETS = [
+    {'base': 7, 'rolls': 2, 'spacing': 0, 'pitch': 1},
+    {'base': 7, 'rolls': 7, 'spacing': 1, 'pitch': 0},
+    {'base': 7, 'rolls': 3, 'spacing': 2, 'pitch': 2},
+    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 3},
+    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
+    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
+    {'base': 7, 'rolls': 0, 'spacing': 0, 'pitch': 2},
 ]
 
 _pattern_rng = random.Random()
@@ -192,19 +190,21 @@ def get_pattern_shape(rng, selection, style):
         return rng.choice([1, 2, 2, 4])
     if style == 1:
         return 1
-    if style in (2, 6, 10):
-        return rng.choice([1, 2, 2, 5])
-    if style in (4, 7, 8):
+    if style == 2:
+        return 2
+    if style == 3:
         return rng.choice([2, 3, 4, 4, 5])
+    if style == 4:
+        return rng.choice([1, 2, 3, 5])
     if style == 5:
-        return rng.choice([1, 3, 4, 4])
-    if style in (11, 12, 13):
+        return rng.choice([2, 3, 4, 4, 5])
+    if style == 6:
         return rng.choice([2, 3, 4, 5])
     return rng.choice([1, 2, 3, 4, 5])
 
 
 def pitch_for_hit(rng, pitch_mode, kind, style):
-    if kind == 'anchor':
+    if kind in ('anchor', 'steady'):
         return 60
 
     if pitch_mode == 0:
@@ -217,12 +217,12 @@ def pitch_for_hit(rng, pitch_mode, kind, style):
             return 60
         return 60 + rng.choice([-1, 1])
 
-    if style == 4:
-        if chance < 0.56:
+    if pitch_mode == 3:
+        if chance < 0.48:
             return 60
-        if chance < 0.70:
+        if chance < 0.64:
             return 60 + rng.choice([-2, -1, 1, 2])
-        if chance < 0.82:
+        if chance < 0.78:
             return 60 + rng.choice([-5, -4, -3, 3, 4, 5])
         return 60 + rng.choice(
             [-12, -11, -10, -8, -7, 7, 8, 10, 11, 12]
@@ -242,6 +242,9 @@ def pitch_for_hit(rng, pitch_mode, kind, style):
 
 
 def velocity_for_hit(rng, time, beat_ticks, kind, style):
+    if kind == 'steady':
+        return 0.80
+
     if kind == 'anchor':
         return 0.92
 
@@ -272,22 +275,10 @@ def add_steady_pattern(
     spacing,
     profile,
 ):
-    slot = 0
     time = bar_start
 
     while time < bar_start + bar_ticks:
-        is_downbeat = (time - bar_start) % (spacing * 4) == 0
-        chance = profile['density']
-
-        if is_downbeat:
-            chance += 0.18
-        elif slot % 2:
-            chance -= profile['gaps']
-
-        if rng.random() < clamp(chance, 0.18, 0.98):
-            add_hit(events, time, 0.80, 'main')
-
-        slot += 1
+        add_hit(events, time, 0.80, 'steady')
         time += spacing
 
 
@@ -469,10 +460,11 @@ def apply(form: flp.ScriptDialog) -> None:
 
     bar_count = form.getInputValue('Bars') + 1
     style = form.getInputValue('Style')
-    base_selection = form.getInputValue('Base Spacing')
-    roll_selection = form.getInputValue('Rolls')
-    shape_selection = form.getInputValue('Pattern Spacing')
-    pitch_mode = form.getInputValue('Pitch Variation')
+    preset = STYLE_PRESETS[style]
+    base_selection = preset['base']
+    roll_selection = preset['rolls']
+    shape_selection = preset['spacing']
+    pitch_mode = preset['pitch']
     seed = form.getInputValue('Pattern')
 
     if form.getInputValue('Clear Notes First'):
@@ -551,19 +543,23 @@ def apply(form: flp.ScriptDialog) -> None:
                 roll_spacing,
             )
 
-        add_style_fill(
-            events,
-            rng,
-            bar_start,
-            bar_ticks,
-            step_ticks,
-            roll_spacing,
-            profile,
-            bar_index == bar_count - 1,
-        )
+        if shape != 1:
+            add_style_fill(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                step_ticks,
+                roll_spacing,
+                profile,
+                bar_index == bar_count - 1,
+            )
 
     # Every pattern starts with a clear C5 hi-hat.
-    add_hit(events, 0, 0.92, 'anchor')
+    if shape_selection == 1:
+        add_hit(events, 0, 0.80, 'steady')
+    else:
+        add_hit(events, 0, 0.92, 'anchor')
 
     ordered_times = sorted(events.keys())
 
