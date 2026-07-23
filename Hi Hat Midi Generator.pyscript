@@ -7,16 +7,20 @@ SCRIPT_TITLE = 'Hi Hat Midi Generator'
 SCRIPT_DESCRIPTION = 'hi hat midi generator v1.3 by @prodqualitymusic'
 
 STYLES = [
-    'Modern Trap',
-    'Trap Bounce',
+    'Memphis Drill',
+    'Walkdown',
     'Dark Atlanta',
-    'Memphis Trap',
-    'Triplet Heavy',
+    'Trap Modern',
+    'Trap Hybrid',
+    'Triplet Bounce',
+    'Southside',
+    'TM88',
+    'Wheezy',
+    'Chicago GLO',
+    'Southern OG',
+    'Chicago Drill',
     'UK Drill',
     'NYC Drill',
-    'Chicago Drill',
-    'Detroit Trap',
-    'Mixed',
 ]
 
 BASE_SPACINGS = [
@@ -49,11 +53,13 @@ ROLL_DIVISIONS = [
     'Bar',
 ]
 
-PATTERN_SHAPES = [
+PATTERN_SPACINGS = [
     'Auto',
     'Steady',
     'Spaced Pairs',
     'Roll Then Space',
+    'Staggered Bursts',
+    'Long Gap Drops',
 ]
 
 PITCH_MODES = [
@@ -74,16 +80,20 @@ BAR_OPTIONS = [
 ]
 
 STYLE_PROFILES = [
-    {'density': 0.76, 'rolls': 0.48, 'triplets': 0.34, 'gaps': 0.12},
-    {'density': 0.70, 'rolls': 0.44, 'triplets': 0.38, 'gaps': 0.20},
-    {'density': 0.68, 'rolls': 0.58, 'triplets': 0.44, 'gaps': 0.18},
-    {'density': 0.62, 'rolls': 0.42, 'triplets': 0.62, 'gaps': 0.26},
-    {'density': 0.72, 'rolls': 0.56, 'triplets': 0.88, 'gaps': 0.16},
-    {'density': 0.68, 'rolls': 0.70, 'triplets': 0.68, 'gaps': 0.24},
-    {'density': 0.74, 'rolls': 0.76, 'triplets': 0.52, 'gaps': 0.22},
-    {'density': 0.70, 'rolls': 0.64, 'triplets': 0.58, 'gaps': 0.20},
-    {'density': 0.58, 'rolls': 0.36, 'triplets': 0.28, 'gaps': 0.30},
-    {'density': 0.72, 'rolls': 0.66, 'triplets': 0.62, 'gaps': 0.20},
+    {'density': 0.70, 'rolls': 0.52, 'triplets': 0.62, 'gaps': 0.20, 'velocity': 0.10},
+    {'density': 0.98, 'rolls': 0.08, 'triplets': 0.08, 'gaps': 0.00, 'velocity': 0.04},
+    {'density': 0.68, 'rolls': 0.58, 'triplets': 0.44, 'gaps': 0.20, 'velocity': 0.12},
+    {'density': 0.76, 'rolls': 0.52, 'triplets': 0.40, 'gaps': 0.14, 'velocity': 0.10},
+    {'density': 0.64, 'rolls': 0.72, 'triplets': 0.56, 'gaps': 0.24, 'velocity': 0.18},
+    {'density': 0.74, 'rolls': 0.68, 'triplets': 0.96, 'gaps': 0.16, 'velocity': 0.12},
+    {'density': 0.66, 'rolls': 0.62, 'triplets': 0.52, 'gaps': 0.24, 'velocity': 0.14},
+    {'density': 0.70, 'rolls': 0.78, 'triplets': 0.58, 'gaps': 0.22, 'velocity': 0.22},
+    {'density': 0.72, 'rolls': 0.86, 'triplets': 0.70, 'gaps': 0.24, 'velocity': 0.26},
+    {'density': 0.72, 'rolls': 0.42, 'triplets': 0.34, 'gaps': 0.16, 'velocity': 0.08},
+    {'density': 0.62, 'rolls': 0.34, 'triplets': 0.28, 'gaps': 0.26, 'velocity': 0.08},
+    {'density': 0.68, 'rolls': 0.60, 'triplets': 0.50, 'gaps': 0.20, 'velocity': 0.12},
+    {'density': 0.68, 'rolls': 0.72, 'triplets': 0.70, 'gaps': 0.24, 'velocity': 0.18},
+    {'density': 0.74, 'rolls': 0.78, 'triplets': 0.54, 'gaps': 0.22, 'velocity': 0.20},
 ]
 
 _pattern_rng = random.Random()
@@ -92,13 +102,13 @@ _active_seed = None
 
 def createDialog() -> flp.ScriptDialog:
     form = flp.ScriptDialog(SCRIPT_TITLE, SCRIPT_DESCRIPTION)
-    form.addInputCombo('Bars', BAR_OPTIONS, 7)
-    form.addInputCombo('Style', STYLES, 0)
-    form.addInputCombo('Base Spacing', BASE_SPACINGS, 0)
-    form.addInputCombo('Roll Division', ROLL_DIVISIONS, 0)
-    form.addInputCombo('Pattern Shape', PATTERN_SHAPES, 0)
+    form.addInputCombo('Bars', BAR_OPTIONS, 1)
+    form.addInputCombo('Style', STYLES, 2)
+    form.addInputCombo('Base Spacing', BASE_SPACINGS, 7)
+    form.addInputCombo('Rolls', ROLL_DIVISIONS, 3)
+    form.addInputCombo('Pattern Spacing', PATTERN_SPACINGS, 2)
     form.addInputCombo('Pitch Variation', PITCH_MODES, 2)
-    form.addInputKnobInt('Seed', 1, 1, 9999)
+    form.addInputKnobInt('Pattern', 1, 1, 9999)
     form.addInputCheckbox('Clear Notes First', True)
     return form
 
@@ -143,12 +153,18 @@ def get_base_spacing(rng, selection, style, beat_ticks):
     if selection > 0:
         return snap_spacing(selection, beat_ticks)
 
-    if style in (3, 8):
-        choices = [7, 7, 8, 9, 10]
-    elif style in (4, 5, 7):
+    if style == 0:
+        choices = [7, 7, 7, 2, 3]
+    elif style == 1:
+        choices = [7]
+    elif style == 5:
+        choices = [8, 8, 8, 6, 3]
+    elif style in (6, 7, 8):
+        choices = [5, 7, 7, 8, 9]
+    elif style in (9, 10):
+        choices = [7, 7, 9, 10]
+    elif style in (11, 12, 13):
         choices = [5, 7, 8, 8, 9]
-    elif style in (1, 2):
-        choices = [5, 7, 7, 9]
     else:
         choices = [5, 7, 8, 9]
 
@@ -172,14 +188,22 @@ def get_pattern_shape(rng, selection, style):
     if selection > 0:
         return selection
 
-    if style in (1, 3, 8):
-        return rng.choice([1, 2, 2, 3])
-    if style in (5, 6, 7):
-        return rng.choice([1, 2, 3, 3])
-    return rng.choice([1, 1, 2, 3])
+    if style == 0:
+        return rng.choice([1, 2, 2, 4])
+    if style == 1:
+        return 1
+    if style in (2, 6, 10):
+        return rng.choice([1, 2, 2, 5])
+    if style in (4, 7, 8):
+        return rng.choice([2, 3, 4, 4, 5])
+    if style == 5:
+        return rng.choice([1, 3, 4, 4])
+    if style in (11, 12, 13):
+        return rng.choice([2, 3, 4, 5])
+    return rng.choice([1, 2, 3, 4, 5])
 
 
-def pitch_for_hit(rng, pitch_mode, kind):
+def pitch_for_hit(rng, pitch_mode, kind, style):
     if kind == 'anchor':
         return 60
 
@@ -192,6 +216,17 @@ def pitch_for_hit(rng, pitch_mode, kind):
         if chance < 0.92:
             return 60
         return 60 + rng.choice([-1, 1])
+
+    if style == 4:
+        if chance < 0.56:
+            return 60
+        if chance < 0.70:
+            return 60 + rng.choice([-2, -1, 1, 2])
+        if chance < 0.82:
+            return 60 + rng.choice([-5, -4, -3, 3, 4, 5])
+        return 60 + rng.choice(
+            [-12, -11, -10, -8, -7, 7, 8, 10, 11, 12]
+        )
 
     if chance < 0.80:
         return 60
@@ -206,7 +241,7 @@ def pitch_for_hit(rng, pitch_mode, kind):
     return 60 + shift
 
 
-def velocity_for_hit(rng, time, beat_ticks, kind):
+def velocity_for_hit(rng, time, beat_ticks, kind, style):
     if kind == 'anchor':
         return 0.92
 
@@ -218,7 +253,8 @@ def velocity_for_hit(rng, time, beat_ticks, kind):
     elif beat_position >= beat_ticks // 2:
         velocity -= 0.08
 
-    velocity += rng.uniform(-0.10, 0.10)
+    velocity_spread = STYLE_PROFILES[style]['velocity']
+    velocity += rng.uniform(-velocity_spread, velocity_spread)
 
     if kind == 'roll':
         velocity -= rng.uniform(0.04, 0.13)
@@ -330,6 +366,74 @@ def add_roll_then_space(
             add_hit(events, pair_start + spacing, 0.76, 'pair')
 
 
+def add_staggered_bursts(
+    events,
+    rng,
+    bar_start,
+    bar_ticks,
+    spacing,
+    roll_spacing,
+):
+    end = bar_start + bar_ticks
+    time = bar_start
+
+    while time < end:
+        burst_size = rng.choice([2, 2, 3, 3, 4])
+        burst_spacing = rng.choice([spacing, spacing, roll_spacing])
+
+        for hit_index in range(burst_size):
+            hit_time = time + (hit_index * burst_spacing)
+            if hit_time >= end:
+                break
+            add_hit(
+                events,
+                hit_time,
+                0.84 - (hit_index * 0.035),
+                'pair',
+            )
+
+        gap = rng.choice([3, 4, 5, 6]) * spacing
+        time += max(gap, burst_size * burst_spacing)
+
+
+def add_long_gap_drops(
+    events,
+    rng,
+    bar_start,
+    bar_ticks,
+    spacing,
+    roll_spacing,
+):
+    end = bar_start + bar_ticks
+    add_hit(events, bar_start, 0.90, 'main')
+
+    first_pair = bar_start + spacing
+    if first_pair < end:
+        add_hit(events, first_pair, 0.78, 'pair')
+
+    late_start = bar_start + rng.choice(
+        [
+            bar_ticks // 2,
+            (bar_ticks * 5) // 8,
+            (bar_ticks * 3) // 4,
+        ]
+    )
+
+    if rng.random() < 0.58:
+        add_roll(
+            events,
+            rng,
+            late_start,
+            end,
+            roll_spacing,
+            rng.choice([4, 5, 6, 8]),
+        )
+    else:
+        add_hit(events, late_start, 0.86, 'pair')
+        if late_start + spacing < end:
+            add_hit(events, late_start + spacing, 0.76, 'pair')
+
+
 def add_style_fill(
     events,
     rng,
@@ -366,10 +470,10 @@ def apply(form: flp.ScriptDialog) -> None:
     bar_count = form.getInputValue('Bars') + 1
     style = form.getInputValue('Style')
     base_selection = form.getInputValue('Base Spacing')
-    roll_selection = form.getInputValue('Roll Division')
-    shape_selection = form.getInputValue('Pattern Shape')
+    roll_selection = form.getInputValue('Rolls')
+    shape_selection = form.getInputValue('Pattern Spacing')
     pitch_mode = form.getInputValue('Pitch Variation')
-    seed = form.getInputValue('Seed')
+    seed = form.getInputValue('Pattern')
 
     if form.getInputValue('Clear Notes First'):
         flp.score.clearNotes(True)
@@ -419,8 +523,26 @@ def apply(form: flp.ScriptDialog) -> None:
                 spacing,
                 profile,
             )
-        else:
+        elif shape == 3:
             add_roll_then_space(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                spacing,
+                roll_spacing,
+            )
+        elif shape == 4:
+            add_staggered_bursts(
+                events,
+                rng,
+                bar_start,
+                bar_ticks,
+                spacing,
+                roll_spacing,
+            )
+        else:
+            add_long_gap_drops(
                 events,
                 rng,
                 bar_start,
@@ -454,7 +576,12 @@ def apply(form: flp.ScriptDialog) -> None:
         )
 
         note = flp.Note()
-        note.number = pitch_for_hit(rng, pitch_mode, hit['kind'])
+        note.number = pitch_for_hit(
+            rng,
+            pitch_mode,
+            hit['kind'],
+            style,
+        )
         note.time = time
         note.length = max(1, min(step_ticks, next_time - time))
         note.velocity = velocity_for_hit(
@@ -462,5 +589,6 @@ def apply(form: flp.ScriptDialog) -> None:
             time,
             beat_ticks,
             hit['kind'],
+            style,
         )
         flp.score.addNote(note)
