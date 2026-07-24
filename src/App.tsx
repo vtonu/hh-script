@@ -36,17 +36,17 @@ const screenshots = [
   {
     src: "/screenshots/generator.jpg",
     alt: "Hi Hat MIDI Generator inside FL Studio",
-    label: "THE GENERATOR IN ACTION",
+    label: "HI HAT MIDI SCRIPT",
   },
   {
     src: "/screenshots/app-closeup.jpg",
     alt: "Hi Hat MIDI Generator app close-up",
-    label: "THE APP",
+    label: "HI HAT MIDI SCRIPT",
   },
   {
     src: "/screenshots/piano-roll-tools.jpg",
     alt: "Piano Roll menu with Tools option",
-    label: "PIANO ROLL TOOLS",
+    label: "TOP LEFT CORNER > DROPDOWN > TOOLS",
   },
   {
     src: "/screenshots/tools-menu.jpg",
@@ -82,25 +82,24 @@ function App() {
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Hi Hat MIDI Generator home">
-          HH<span>/</span>MIDI
+          HI HAT MIDI GENERATOR
         </a>
-        <span className="version">FREE FL STUDIO SCRIPT · V1.5.2</span>
+        <span className="version">FREE FL STUDIO SCRIPT</span>
       </header>
 
       <div className="layout">
         <section className="intro" aria-labelledby="page-title">
           <p className="eyebrow">
-            <span />
+            <img src="/favicon.svg" alt="" aria-hidden="true" />
             WORK SMARTER
           </p>
           <h1 id="page-title">
-            HI HAT
+            HI HAT MIDI
             <br />
-            MIDI <em>GENERATOR.</em>
+            <em>GENERATOR.</em>
           </h1>
           <p className="lede">
-            Create quick hi-hat midis inside FL Studio. Download the script,
-            install it once, and open it directly from your piano roll tools.
+            Create endless hi-hat midis inside FL Studio.
           </p>
           <Button asChild size="lg" className="download-button">
             <a href="/Hi Hat Midi Generator.pyscript" download>
@@ -108,13 +107,12 @@ function App() {
               DOWNLOAD SCRIPT
             </a>
           </Button>
-          <p className="file-note">.PYSCRIPT FILE</p>
+          <p className="file-note">.PYSCRIPT FILE · V1.5.2</p>
         </section>
 
-        <section className="steps-panel" aria-labelledby="steps-title">
+        <section className="steps-panel" aria-label="Install">
           <div className="section-heading">
             <p>INSTALL</p>
-            <h2 id="steps-title">4 QUICK STEPS</h2>
           </div>
 
           <ol className="steps">
@@ -147,6 +145,7 @@ function App() {
             <Button
               variant="ghost"
               size="icon"
+              className="copy-button"
               onClick={copyPath}
               aria-label="Copy install folder"
             >

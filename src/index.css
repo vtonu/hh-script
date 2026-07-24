@@ -68,7 +68,6 @@ footer {
   text-decoration: none;
 }
 
-.brand span,
 .eyebrow,
 .section-heading p,
 .preview-top,
@@ -105,14 +104,10 @@ footer {
   letter-spacing: 0.18em;
 }
 
-.eyebrow span {
-  width: 30px;
-  height: 8px;
-  background:
-    linear-gradient(currentColor, currentColor) 0 5px / 5px 3px no-repeat,
-    linear-gradient(currentColor, currentColor) 8px 2px / 5px 6px no-repeat,
-    linear-gradient(currentColor, currentColor) 16px 4px / 5px 4px no-repeat,
-    linear-gradient(currentColor, currentColor) 24px 0 / 6px 8px no-repeat;
+.eyebrow img {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
 }
 
 h1 {
@@ -283,6 +278,17 @@ h1 em {
 
 .path-box svg {
   width: 15px;
+}
+
+.copy-button {
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    transform 90ms ease;
+}
+
+.copy-button:active {
+  transform: translateY(2px) scale(0.96);
 }
 
 .preview-panel {
