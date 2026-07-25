@@ -34,23 +34,18 @@ const steps = [
 
 const screenshots = [
   {
-    src: "/screenshots/generator.jpg",
-    alt: "Hi Hat MIDI Generator inside FL Studio",
-    label: "HI HAT MIDI SCRIPT",
+    src: "/screenshots/tm88-pattern-spacing.jpg",
+    alt: "Hi Hat MIDI Generator v1.5.3 showing TM88 and the new pattern spacing styles",
+    label: "V1.5.3 PATTERN SPACING STYLES",
   },
   {
-    src: "/screenshots/app-closeup.jpg",
-    alt: "Hi Hat MIDI Generator app close-up",
-    label: "HI HAT MIDI SCRIPT",
+    src: "/screenshots/wheezy-triplet-pairs.jpg",
+    alt: "Wheezy Triplet Pairs pattern with Tight pitch variation in FL Studio",
+    label: "WHEEZY + TRIPLET PAIRS + TIGHT",
   },
   {
-    src: "/screenshots/piano-roll-tools.jpg",
-    alt: "Piano Roll menu with Tools option",
-    label: "TOP LEFT CORNER > DROPDOWN > TOOLS",
-  },
-  {
-    src: "/screenshots/tools-menu.jpg",
-    alt: "Tools menu with Hi Hat MIDI Generator",
+    src: "/screenshots/tools-scripts-generator.jpg",
+    alt: "FL Studio Piano Roll Tools and Scripts menu with Hi Hat MIDI Generator selected",
     label: "TOOLS > SCRIPTS > HI HAT MIDI GENERATOR",
   },
 ];
@@ -107,7 +102,7 @@ function App() {
               DOWNLOAD SCRIPT
             </a>
           </Button>
-          <p className="file-note">.PYSCRIPT FILE · V1.5.2</p>
+          <p className="file-note">.PYSCRIPT FILE · V1.5.3</p>
         </section>
 
         <section className="steps-panel" aria-label="Install">
