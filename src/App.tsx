@@ -28,7 +28,7 @@ const steps = [
     text: "Open a fresh FL Studio session after the file is installed.",
   },
   {
-    title: "Open the tool",
+    title: "Open the script",
     text: "Add a hi-hat, open Piano Roll, then go to Tools > Scripts > Hi Hat MIDI Generator.",
   },
 ];
@@ -79,7 +79,7 @@ function App() {
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Hi Hat MIDI Generator home">
-          HI HAT MIDI GENERATOR
+          HI HAT MIDI <span>GENERATOR</span>
         </a>
         <span className="version">FREE FL STUDIO SCRIPT</span>
       </header>
@@ -95,7 +95,9 @@ function App() {
             <br />
             <em>GENERATOR.</em>
           </h1>
-          <p className="lede">Create endless hi-hat midis inside FL Studio.</p>
+          <p className="lede">
+            Create endless hi-hat midi patterns inside FL Studio piano roll.
+          </p>
           <Button asChild size="lg" className="download-button">
             <a href="/Hi Hat Midi Generator.pyscript" download>
               <Download aria-hidden="true" />
