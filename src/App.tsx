@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Analytics } from "@vercel/analytics/react";
 
 const installPath =
   "C:\\Program Files\\Image-Line\\FL Studio 2026\\System\\Config\\Piano roll scripts";
@@ -57,7 +58,8 @@ function App() {
 
   const changeShot = (direction: number) => {
     setActiveShot(
-      (current) => (current + direction + screenshots.length) % screenshots.length,
+      (current) =>
+        (current + direction + screenshots.length) % screenshots.length,
     );
   };
 
@@ -93,9 +95,7 @@ function App() {
             <br />
             <em>GENERATOR.</em>
           </h1>
-          <p className="lede">
-            Create endless hi-hat midis inside FL Studio.
-          </p>
+          <p className="lede">Create endless hi-hat midis inside FL Studio.</p>
           <Button asChild size="lg" className="download-button">
             <a href="/Hi Hat Midi Generator.pyscript" download>
               <Download aria-hidden="true" />
@@ -213,6 +213,7 @@ function App() {
           BUY ME A COFFEE
         </a>
       </footer>
+      <Analytics />
     </main>
   );
 }
