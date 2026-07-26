@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronLeft,
@@ -6,6 +6,8 @@ import {
   Coffee,
   Copy,
   Download,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,21 +35,29 @@ const steps = [
   },
 ];
 
-const screenshots = [
+const slides = [
   {
+    type: "image",
     src: "/screenshots/tm88-pattern-spacing.jpg",
     alt: "Hi Hat MIDI Generator v1.5.3 showing TM88 and the new pattern spacing styles",
     label: "V1.5.3 PATTERN SPACING STYLES",
   },
   {
+    type: "image",
     src: "/screenshots/wheezy-triplet-pairs.jpg",
     alt: "Wheezy Triplet Pairs pattern with Tight pitch variation in FL Studio",
     label: "WHEEZY + TRIPLET PAIRS + TIGHT",
   },
   {
+    type: "image",
     src: "/screenshots/tools-scripts-generator.jpg",
     alt: "FL Studio Piano Roll Tools and Scripts menu with Hi Hat MIDI Generator selected",
     label: "TOOLS > SCRIPTS > HI HAT MIDI GENERATOR",
+  },
+  {
+    type: "video",
+    src: "/demo.mp4",
+    label: "HI HAT MIDI GENERATOR DEMO",
   },
 ];
 
@@ -55,12 +65,42 @@ function App() {
   const [activeShot, setActiveShot] = useState(0);
   const [copied, setCopied] = useState(false);
   const [pathHighlighted, setPathHighlighted] = useState(false);
+  const [videoMuted, setVideoMuted] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const changeShot = (direction: number) => {
     setActiveShot(
-      (current) =>
-        (current + direction + screenshots.length) % screenshots.length,
+      (current) => (current + direction + slides.length) % slides.length,
     );
+  };
+
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    video.currentTime = 0;
+    video.muted = true;
+    setVideoMuted(true);
+    void video.play().catch(() => undefined);
+
+    return () => {
+      video.pause();
+      video.currentTime = 0;
+    };
+  }, [activeShot]);
+
+  const toggleVideoSound = () => {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    video.muted = !video.muted;
+    setVideoMuted(video.muted);
   };
 
   const copyPath = async () => {
@@ -153,22 +193,44 @@ function App() {
 
         <section className="preview-panel" aria-label="FL Studio install guide">
           <div className="preview-top">
-            <span>{screenshots[activeShot].label}</span>
+            <span>{slides[activeShot].label}</span>
             <span>
-              0{activeShot + 1} / 0{screenshots.length}
+              0{activeShot + 1} / 0{slides.length}
             </span>
           </div>
           <div className="preview-image">
-            <img
-              src={screenshots[activeShot].src}
-              alt={screenshots[activeShot].alt}
-            />
+            {slides[activeShot].type === "video" ? (
+              <>
+                <video
+                  ref={videoRef}
+                  src={slides[activeShot].src}
+                  autoPlay
+                  muted
+                  playsInline
+                  preload="metadata"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="sound-button"
+                  onClick={toggleVideoSound}
+                  aria-label={videoMuted ? "Unmute demo" : "Mute demo"}
+                >
+                  {videoMuted ? <VolumeX /> : <Volume2 />}
+                </Button>
+              </>
+            ) : (
+              <img
+                src={slides[activeShot].src}
+                alt={slides[activeShot].alt}
+              />
+            )}
           </div>
           <div className="preview-controls">
             <div className="dots" aria-hidden="true">
-              {screenshots.map((shot, index) => (
+              {slides.map((slide, index) => (
                 <span
-                  key={shot.label}
+                  key={slide.label}
                   className={index === activeShot ? "active" : ""}
                 />
               ))}
