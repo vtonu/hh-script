@@ -103,6 +103,12 @@ function App() {
     setVideoMuted(video.muted);
   };
 
+  const playVideoWhenReady = () => {
+    if (activeShot === slides.length - 1) {
+      void videoRef.current?.play().catch(() => undefined);
+    }
+  };
+
   const copyPath = async () => {
     await navigator.clipboard.writeText(installPath);
     setCopied(true);
@@ -199,18 +205,22 @@ function App() {
             </span>
           </div>
           <div className="preview-image">
+            <video
+              ref={videoRef}
+              className={
+                slides[activeShot].type === "video" ? "active" : undefined
+              }
+              src="/demo.mp4"
+              poster="/screenshots/tm88-pattern-spacing.jpg"
+              muted
+              playsInline
+              preload="auto"
+              onCanPlay={playVideoWhenReady}
+            />
             {slides[activeShot].type === "video" ? (
               <>
-                <video
-                  ref={videoRef}
-                  src={slides[activeShot].src}
-                  autoPlay
-                  muted
-                  playsInline
-                  preload="metadata"
-                />
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
                   className="sound-button"
                   onClick={toggleVideoSound}

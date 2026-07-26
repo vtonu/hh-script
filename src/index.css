@@ -339,25 +339,48 @@ h1 em {
   object-position: center;
 }
 
+.preview-image video {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.preview-image video.active {
+  visibility: visible;
+  opacity: 1;
+}
+
 .sound-button {
   position: absolute;
   right: 12px;
   bottom: 12px;
-  width: 36px;
-  height: 36px;
-  border-color: rgba(255, 255, 255, 0.24);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
   color: hsl(var(--foreground));
-  background: rgba(10, 11, 10, 0.78);
-  backdrop-filter: blur(8px);
+  background: transparent;
+  opacity: 0.72;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.95));
+  transition:
+    color 140ms ease,
+    opacity 140ms ease,
+    transform 90ms ease;
 }
 
 .sound-button:hover {
   color: hsl(var(--primary));
-  background: rgba(10, 11, 10, 0.92);
+  background: transparent;
+  opacity: 1;
+}
+
+.sound-button:active {
+  transform: scale(0.92);
 }
 
 .sound-button svg {
-  width: 15px;
+  width: 18px;
 }
 
 .preview-controls {
