@@ -59,6 +59,21 @@ const slides = [
     src: "/demo.mp4",
     label: "HI HAT MIDI GENERATOR DEMO",
   },
+  {
+    type: "video",
+    src: "/demo2.mp4",
+    label: "HI HAT MIDI GENERATOR DEMO 2",
+  },
+  {
+    type: "video",
+    src: "/demo3.mp4",
+    label: "HI HAT MIDI GENERATOR DEMO 3",
+  },
+  {
+    type: "video",
+    src: "/demo4.mp4",
+    label: "HI HAT MIDI GENERATOR DEMO 4",
+  },
 ];
 
 function App() {
@@ -104,7 +119,7 @@ function App() {
   };
 
   const playVideoWhenReady = () => {
-    if (activeShot === slides.length - 1) {
+    if (slides[activeShot].type === "video") {
       void videoRef.current?.play().catch(() => undefined);
     }
   };
@@ -210,7 +225,11 @@ function App() {
               className={
                 slides[activeShot].type === "video" ? "active" : undefined
               }
-              src="/demo.mp4"
+              src={
+                slides[activeShot].type === "video"
+                  ? slides[activeShot].src
+                  : undefined
+              }
               poster="/screenshots/tm88-pattern-spacing.jpg"
               muted
               playsInline
