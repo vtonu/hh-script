@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  Cannabis,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -249,10 +250,7 @@ function App() {
                 </Button>
               </>
             ) : (
-              <img
-                src={slides[activeShot].src}
-                alt={slides[activeShot].alt}
-              />
+              <img src={slides[activeShot].src} alt={slides[activeShot].alt} />
             )}
           </div>
           <div className="preview-controls">
@@ -302,8 +300,8 @@ function App() {
           target="_blank"
           rel="noreferrer"
         >
-          <Coffee aria-hidden="true" />
           BUY ME A COFFEE
+          <Cannabis aria-hidden="true" />
         </a>
       </footer>
       <Analytics />
