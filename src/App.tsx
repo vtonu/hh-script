@@ -57,23 +57,18 @@ const slides = [
   },
   {
     type: "video",
-    src: "/demo.mp4",
-    label: "HI HAT MIDI GENERATOR DEMO",
-  },
-  {
-    type: "video",
     src: "/demo2.mp4",
-    label: "HI HAT MIDI GENERATOR DEMO 2",
+    label: "DEMO 1",
   },
   {
     type: "video",
     src: "/demo3.mp4",
-    label: "HI HAT MIDI GENERATOR DEMO 3",
+    label: "DEMO 2",
   },
   {
     type: "video",
     src: "/demo4.mp4",
-    label: "HI HAT MIDI GENERATOR DEMO 4",
+    label: "DEMO 3",
   },
 ];
 
@@ -82,7 +77,7 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [pathHighlighted, setPathHighlighted] = useState(false);
   const [videoMuted, setVideoMuted] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const changeShot = (direction: number) => {
     setActiveShot(
@@ -91,7 +86,7 @@ function App() {
   };
 
   useEffect(() => {
-    const video = videoRef.current;
+    const video = videoRefs.current[activeShot];
 
     if (!video) {
       return;
@@ -109,7 +104,7 @@ function App() {
   }, [activeShot]);
 
   const toggleVideoSound = () => {
-    const video = videoRef.current;
+    const video = videoRefs.current[activeShot];
 
     if (!video) {
       return;
@@ -119,9 +114,9 @@ function App() {
     setVideoMuted(video.muted);
   };
 
-  const playVideoWhenReady = () => {
-    if (slides[activeShot].type === "video") {
-      void videoRef.current?.play().catch(() => undefined);
+  const playVideoWhenReady = (index: number) => {
+    if (index === activeShot) {
+      void videoRefs.current[index]?.play().catch(() => undefined);
     }
   };
 
@@ -221,22 +216,23 @@ function App() {
             </span>
           </div>
           <div className="preview-image">
-            <video
-              ref={videoRef}
-              className={
-                slides[activeShot].type === "video" ? "active" : undefined
-              }
-              src={
-                slides[activeShot].type === "video"
-                  ? slides[activeShot].src
-                  : undefined
-              }
-              poster="/screenshots/tm88-pattern-spacing.jpg"
-              muted
-              playsInline
-              preload="auto"
-              onCanPlay={playVideoWhenReady}
-            />
+            {slides.map((slide, index) =>
+              slide.type === "video" ? (
+                <video
+                  key={slide.src}
+                  ref={(video) => {
+                    videoRefs.current[index] = video;
+                  }}
+                  className={index === activeShot ? "active" : undefined}
+                  src={slide.src}
+                  poster="/screenshots/tm88-pattern-spacing.jpg"
+                  muted
+                  playsInline
+                  preload="auto"
+                  onCanPlay={() => playVideoWhenReady(index)}
+                />
+              ) : null,
+            )}
             {slides[activeShot].type === "video" ? (
               <>
                 <Button
